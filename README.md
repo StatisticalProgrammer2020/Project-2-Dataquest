@@ -5,9 +5,13 @@ This is my second project in Dataquest towards my journey in R Programming. This
 + Iterations
 + Functions
 
+# Data source
+
 The source of the dataset can be accessed here: https://data.world/dataquest/book-reviews
 
 This dataset contains 2,000 rows and 4 columns.
+
+# Variables
 
 Here are the following variables that were used in the analysis:
 + Book - title of book purchased

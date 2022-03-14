@@ -1,0 +1,194 @@
+---
+title: Analyzing R Book Sales Data - A Data Analysis across selected US States
+author: "Abe Ceasar Perez"
+date: "March 13, 2022"
+output: html_document
+---
+<br>
+
+### Determining the Most Profitable Programming Book across selected US States
+<br>
+This project aims to determine which among the popular R programming books is the most profitable to sell and scale among other competitor books. We'll be working with a known bookstore in the US for selling programming books and as analysts, our main task is to increase the company's sales in order to drive more revenue.
+<br>
+<br>
+In addition to that, we'll also be making use of the following concepts in R in order to achieve the given objective:
+
++ Control flow
++ Iterations
++ Functions
+
+### Initial Findings
+
+Based on the results of the project, the Secrets Of R For Advanced Students book was found to be the most profitable book in terms of sales alone. The process of these findings can be viewed below:
+<br>
+
+
+### Loading the dataset
+
+This dataset was obtained from Data world, a public website for posting various datasets - <https://data.world/dataquest/book-reviews>. After downloading the dataset online, we then load the needed packages before loading the actual data. After initial inspection, we determine that there are 2000 rows in the dataset as well as 4 columns which contains the variables that we'll use in the analysis.
+
+```{r load_df, include=TRUE, warning=FALSE}
+
+setwd("C:\\Users\\Abe\\Desktop\\Dataquest modules\\Data Analyst in R\\Guided Projects\\project_2")
+#quiets the message of package launches
+suppressPackageStartupMessages(library(readr))
+suppressPackageStartupMessages(library(dplyr))
+
+df <- read_csv("book_reviews.csv", show_col_types = FALSE) #loads dataset w/o showing cols
+dim(df) #prints the dimensions of df
+
+```
+
+### Inspecting the Data
+<br>
+To further understand the nature of the data, we'll start by understanding the meaning behind each column. After storing the column names and viewing each column, we'll list down each column as well as our understanding as to what the columns mean based on the provided dataset:
+
+1. book - name of book
+2. review - one word review of the book
+3. state - state where the book is sold
+4. price - price of the book sold
+
+```{r read_cols, include=TRUE, warning=FALSE}
+columns <- colnames(df) ## Stores column names into a vector
+columns
+```
+
+We'll then proceed with checking the type of data for each column to check whether or not each column follows the correct type based on the data provided. Based on the output below, most of the data types were found to be appropriate for each column of data.
+
+```{r col_types, include=TRUE, warning=FALSE}
+
+## Prints each column with their corresponding data type
+for(col in columns){
+  cat("Column name:",col,"- Type:",typeof(df[[col]]),"\n")
+}
+```
+
+We'll also check whether each of the data found in each column is indeed unique and do not contain any possible duplicates. Based on the output below, we can see that the unique state values should only have four unique values instead of eight since the other four values are just abbreviations of the full state name. We also noticed that one of the unique values for review is NA, meaning there might be observations with missing reviews.
+
+```{r unique_vals, include=TRUE, warning=FALSE}
+
+## Prints each column with their unique values
+for(col in columns){
+  cat("Column name:",col,"\nUnique values:",unique(df[[col]]),"\n\n")
+}
+```
+
+Since we have verified above that there might be a presence of missing values for reviews, we'll then check how many missing values are indeed present in these columns. It is observed that only reviews have indeed presence of missing values which constitute roughly 10% of the entire dataset.
+
+```{r missing_vals, include=TRUE, warning=FALSE}
+
+## Prints each column with the number of missing values
+for(col in columns){
+  cat("Column name:",col,"\nNumber of missing values:",sum(is.na(df[[col]])),"\n\n")
+}
+```
+
+
+### Handling Missing Observations
+<br>
+Looking further into the dataset, we'll determine the source of these discrepancies by counting the total number of missing reviews per book and then per state. This will be taken into account when presenting the results of this project.
+
+```{r inspect_na, include=TRUE, warning=FALSE}
+
+df_with_na <- df %>% filter(is.na(review))
+df_with_na <- df_with_na %>% mutate(state = case_when(state == "TX"~"Texas",
+                                                            state == "NY"~"New York",
+                                                            state == "FL"~"Florida",
+                                                            state == "CA"~"California",
+                                                            TRUE~state)) ## renames each state
+```
+
+In terms of books, R for Dummies had the most number of missing reviews followed by Secrets Of R For Advanced Students. We will recommend review sites in the future to require the posting of reviews in order to prevent any data discrepancy.
+
+
+```{r missing_vals_book, include=TRUE, warning=FALSE}
+
+na_per_book <- df_with_na %>% group_by(book) %>% summarize(total_na = n()) %>% arrange(desc(total_na)) ## counts the number of missing reviews per book
+na_per_book
+```
+
+In terms of state, on the other hand, Texas had the most number of missing reviews for each of the book sold there. Similar to the previous solution, we'll recommend review sites based on Texas to require the posting of reviews to prevent any data discrepancy.
+
+```{r missing_vals_state, include=TRUE, warning=FALSE}
+
+na_per_state <- df_with_na %>% group_by(state) %>% summarize(total_na = n()) %>% arrange(desc(total_na)) ## counts the number of missing reviews per state
+na_per_state
+```
+
+Since the number of missing values is low (roughly 10%), we'll be omitting these rows since we'll also investigate the reviews for any meaningful insights.
+
+```{r clean_data, include=TRUE, warning=FALSE}
+
+df_without_na <- df %>% filter(!(is.na(review)))
+1794/2000 #Rougly 90% of the data will be used for the analysis
+```
+
+
+### Cleaning the Data and Adding More Columns
+<br>
+Before proceeding to the analysis, we'll first start by making sure each data is clean and preprocessed. As determined earlier, the state variable was found to have ambiguous values, thus, we'll normalize these values in order to obtain only four unique states.
+
+
+```{r modify_vals, include=TRUE, warning=FALSE}
+
+
+df_without_na <- df_without_na %>% mutate(state = case_when(state == "TX"~"Texas",
+                                                            state == "NY"~"New York",
+                                                            state == "FL"~"Florida",
+                                                            state == "CA"~"California",
+                                                            TRUE~state)) ## renames each state
+unique(df_without_na$state)
+```
+
+Since we also have complete review data, we can also normalize this by adding another column with the normalized reviews (using numbers) and another column to determine if the review is high or not.
+
+```{r add_cols, include=TRUE, warning=FALSE}
+
+# Adds additional columns pertaining to the review data
+df_without_na <- df_without_na %>% mutate(review_num = case_when(review == "Poor"~1,
+                                                                 review == "Fair"~2,
+                                                                 review == "Good"~3,
+                                                                 review == "Great"~4,
+                                                                 review == "Excellent"~5,
+                                                                 TRUE~NA_real_), 
+                                          is_high_review = ifelse(review_num >= 4, TRUE, FALSE)) 
+```
+
+
+### Which Book is the Most Profitable for the Bookstore to Sell?
+<br>
+Using the cleaned data, we'll now proceed with creating dataframe to summarize the sales accumulated for each book, the number of books sold, and the retail price. The number of sales is calculated by the number of books sold multiplied by the retail price of the book. Based on the findings below, the Secrets Of R For Advanced Students had the highest total of accumulated sales with over $18,000 sales in total despite being the most expensive book based on retail price. 
+<br>
+<br>
+There also seems to be no change in demand based on the price of the book, meaning, it is possible that customers focus more on the quality of the books rather than price alone.
+
+```{r profitability, include=TRUE, warning=FALSE}
+
+book_profits <- df_without_na %>% group_by(book) %>% summarize(Total_sales = sum(price), Books_sold = n(), Book_price = mean(price)) %>% arrange(desc(Total_sales)) # Generates profit statistics for each book title
+book_profits
+```
+<br>
+Aside from determining which book to focus on, we also explored other areas in which we'll also generate the maximum amount of revenue. Based on the results below, New York had the highest total of sales with over $15,500 in total while the Top 10 Mistakes R Beginners Make emerged as the most popular book, despite ranking 3rd in terms of the total sales accumulated.
+
+```{r other_recos, include=TRUE, warning=FALSE}
+
+state_profits <- df_without_na %>% group_by(state) %>% summarize(Total_sales = sum(price), Books_sold = n(), Book_price = mean(price)) %>% arrange(desc(Total_sales)) # Generates profit statistics for each state
+state_profits
+
+book_popularity <- df_without_na %>% group_by(book) %>% summarize(Avg_rating = mean(review_num)) %>% arrange(desc(Avg_rating)) # Generates the average rating per book
+book_popularity
+```
+
+
+### Conclusion
+<br>
+The main goal of this project is to determine which book is the most profitable for the bookstore to focus on. Although there are also a number of factors that may also influence the profitability of a given book, we only considered the retail price of the book and the number of book sales since this is the only available data found in the dataset. Based on the findings above, we have determined that the most profitable book is the Secrets Of R For Advanced Students based on total accumulated sales. This, however, does not include the data without reviews since they have to be omitted for the purpose of the analysis.
+<br>
+<br>
+On the other hand, we can also consider expanding to New York since it is possible that majority of the customers are willing to buy programming books regardless of the brand.
+<br>
+<br>
+Lastly, we have also determined that customers are focusing more on the quality/demand of the book rather than the price alone since customers tend to vary in terms of location and their everyday needs.
+<br>
+<br>
+<br>

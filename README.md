@@ -1,4 +1,4 @@
-# Project-2-Dataquest
+# DQ R-Project 2: Determining the Most Profitable R Programming Book among US States
 
 This is my second project in Dataquest towards my journey in R Programming. This project aims to determine which among the R Programming Books are the most profitable among selected US States. In this projects, the following concepts are used to achieve the given problem:
 + Control flow

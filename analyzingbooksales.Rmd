@@ -1,7 +1,6 @@
 ---
 title: Analyzing R Book Sales Data - A Data Analysis across selected US States
 author: "Abe Ceasar Perez"
-date: "March 13, 2022"
 output: html_document
 ---
 <br>
@@ -11,7 +10,7 @@ output: html_document
 This project aims to determine which among the popular R programming books is the most profitable to sell and scale among other competitor books. We'll be working with a known bookstore in the US for selling programming books and as analysts, our main task is to increase the company's sales in order to drive more revenue.
 <br>
 <br>
-In addition to that, we'll also be making use of the following concepts in R in order to achieve the given objective:
+For this project, the following concepts were applied in order to accomplish the objectives above:
 
 + Control flow
 + Iterations
